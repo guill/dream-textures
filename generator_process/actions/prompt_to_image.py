@@ -429,6 +429,9 @@ def prompt_to_image(
     # Stability SDK
     key: str | None = None,
 
+    # WebUI
+    webui_address: str | None = None,
+
     **kwargs
 ) -> Generator[ImageGenerationResult, None, None]:
     match pipeline:
@@ -613,6 +616,27 @@ def prompt_to_image(
                             steps,
                             True
                         )
+        case Pipeline.AUTOMATIC_WEBUI:
+            import requests
+            import base64
+            from PIL import Image, ImageOps
+            import io
+            r = requests.post("http://" + webui_address + "/sdapi/v1/txt2img", json={
+                    "prompt": prompt[0] if isinstance(prompt, list) else prompt,
+                    "width": width or 512,
+                    "height": height or 512,
+                    "cfg_scale": cfg_scale,
+                })
+            if r.status_code != 200:
+                raise Exception(f"Error making request to WebUI: {r.json()}")
+            for encoded_image in r.json()["images"]:
+                image = Image.open(io.BytesIO(base64.b64decode(encoded_image)))
+                yield ImageGenerationResult(
+                    [np.asarray(ImageOps.flip(image).convert('RGBA'), dtype=np.float32) / 255.],
+                    [seed],
+                    steps,
+                    True
+                )
         case _:
             raise Exception(f"Unsupported pipeline {pipeline}.")
 

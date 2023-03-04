@@ -170,6 +170,7 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
     dream_studio_key: StringProperty(name="DreamStudio Key")
+    webui_address: StringProperty(name="WebUI Address")
 
     model_query: StringProperty(name="Search", update=_model_search)
     model_results: CollectionProperty(type=Model)
@@ -198,7 +199,7 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
         if not weights_installed:
             layout.label(text="Complete the following steps to finish setting up the addon:")
 
-        has_dependencies = len(os.listdir(absolute_path(".python_dependencies"))) > 2
+        has_dependencies = True #len(os.listdir(absolute_path(".python_dependencies"))) > 2
         if has_dependencies:
             has_local = Pipeline.local_available()
 
@@ -250,6 +251,12 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
                 layout.template_list(PREFERENCES_UL_ModelList.__name__, "dream_textures_installed_models", self, "installed_models", self, "active_installed_model")
                 layout.operator(ImportWeights.bl_idname, icon='IMPORT')
             
+            automatic_webui_box = layout.box()
+            automatic_webui_box.label(text=f"Automatic WebUI", icon="HIDE_OFF")
+            automatic_webui_box.label(text=f"Use automatic1111's WebUI started with --api")
+            webui_address_row = automatic_webui_box.row()
+            webui_address_row.prop(self, "webui_address", text="Address")
+
             dream_studio_box = layout.box()
             dream_studio_box.label(text=f"DreamStudio{' (Optional)' if has_local else ''}", icon="HIDE_OFF")
             dream_studio_box.label(text=f"Link to your DreamStudio account to run in the cloud{' instead of locally.' if has_local else '.'}")

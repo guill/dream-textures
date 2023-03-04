@@ -100,11 +100,16 @@ def model_options(self, context):
                 ("stable-inpainting-v1-0", "Stable Inpainting v1.0", ModelType.INPAINTING.name),
                 ("stable-inpainting-512-v2-0", "Stable Inpainting v2.0", ModelType.INPAINTING.name),
             ]
+        case Pipeline.AUTOMATIC_WEBUI:
+            return [
+                ("default", "Default", ModelType.PROMPT_TO_IMAGE.name),
+            ]
 
 def pipeline_options(self, context):
     return [
         (Pipeline.STABLE_DIFFUSION.name, 'Stable Diffusion', 'Stable Diffusion on your own hardware', 1),
-        (Pipeline.STABILITY_SDK.name, 'DreamStudio', 'Cloud compute via DreamStudio', 2)
+        (Pipeline.STABILITY_SDK.name, 'DreamStudio', 'Cloud compute via DreamStudio', 2),
+        (Pipeline.AUTOMATIC_WEBUI.name, 'WebUI', 'Custom Hosted WebUI', 3)
     ]
 
 def seed_clamp(self, ctx):
@@ -262,6 +267,7 @@ def generate_args(self):
     args['pipeline'] = Pipeline[args['pipeline']]
     args['outpaint_origin'] = (args['outpaint_origin'][0], args['outpaint_origin'][1])
     args['key'] = bpy.context.preferences.addons[StableDiffusionPreferences.bl_idname].preferences.dream_studio_key
+    args['webui_address'] = bpy.context.preferences.addons[StableDiffusionPreferences.bl_idname].preferences.webui_address
     args['seamless_axes'] = SeamlessAxes(args['seamless_axes'])
     args['width'] = args['width'] if args['use_size'] else None
     args['height'] = args['height'] if args['use_size'] else None

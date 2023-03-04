@@ -65,6 +65,12 @@ Select a different model below.""",
 Enter your API key below{', or change the pipeline' if Pipeline.local_available() else ''}.""",
                     lambda ctx, layout: layout.prop(ctx.preferences.addons[StableDiffusionPreferences.bl_idname].preferences, "dream_studio_key")
                 )
+        case Pipeline.AUTOMATIC_WEBUI:
+            if len(context.preferences.addons[StableDiffusionPreferences.bl_idname].preferences.webui_address) <= 0:
+                raise FixItError(
+                    f"""No WebUI Address entered.""",
+                    lambda ctx, layout: layout.prop(ctx.preferences.addons[StableDiffusionPreferences.bl_idname].preferences, "webui_address")
+                )
 
     init_image = None
     if self.use_init_img:

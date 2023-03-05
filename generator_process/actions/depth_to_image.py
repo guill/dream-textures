@@ -38,6 +38,9 @@ def depth_to_image(
 
     step_preview_mode: StepPreviewMode,
 
+    # WebUI
+    webui_address: str | None = None,
+
     **kwargs
 ) -> Generator[NDArray, None, None]:
     match pipeline:
@@ -387,5 +390,74 @@ def depth_to_image(
         case Pipeline.STABILITY_SDK:
             import stability_sdk
             raise NotImplementedError()
+        case Pipeline.AUTOMATIC_WEBUI:
+            import requests
+            import base64
+            from PIL import Image, ImageOps
+            import io
+
+            endpoint = "/controlnet/txt2img"
+            init_image_b64 = None
+
+            depth_image = ImageOps.flip(Image.fromarray(np.uint8(depth * 255)).convert('L'))
+
+            width = depth_image.size[0]
+            height = depth_image.size[1]
+            max_dim = max(width, height)
+
+            # TODO - We probably want this to be configurable since not every machine can handle a 1024x1024 texture
+            max_allowed_dim = 1024
+            if max_dim > max_allowed_dim:
+                width = width / (max_dim / max_allowed_dim)
+                height = height / (max_dim / max_allowed_dim)
+
+            rounded_size = (
+                int(8 * (width // 8)),
+                int(8 * (height // 8)),
+            )
+
+            depth_image = depth_image.resize(rounded_size)
+            depth_buffer = io.BytesIO()
+            depth_image.save(depth_buffer, format="PNG")
+            depth_image_b64 = base64.b64encode(depth_buffer.getvalue()).decode('utf-8')
+
+            if image is not None:
+                endpoint = "/controlnet/img2img"
+                init_image=(Image.open(image) if isinstance(image, str) else Image.fromarray(image)).resize(rounded_size)
+                buffer = io.BytesIO()
+                init_image.save(buffer, format="PNG")
+                init_image_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+            seamless_axes = SeamlessAxes(seamless_axes)
+            r = requests.post("http://" + webui_address + endpoint, json={
+                    "prompt": prompt[0] if isinstance(prompt, list) else prompt,
+                    "negative_prompt": negative_prompt if use_negative_prompt else None,
+                    "init_images": None if init_image_b64 is None else [init_image_b64],
+                    "width": rounded_size[0],
+                    "height": rounded_size[1],
+                    "cfg_scale": cfg_scale,
+                    "steps": steps,
+                    "seed": seed,
+                    "denoising_strength": strength,
+                    "tiling": seamless_axes.x or seamless_axes.y,
+                    "controlnet_units": [
+                        {
+                            "input_image": depth_image_b64,
+                            # "module": "depth",
+                            "model": "control_sd15_depth [fef5e48e]",
+                        },
+                    ],
+                })
+            if r.status_code != 200:
+                raise Exception(f"Error making request to WebUI: {r.json()}")
+            result = r.json()
+            for encoded_image in result["images"][:-1]:
+                image = Image.open(io.BytesIO(base64.b64decode(encoded_image)))
+                yield ImageGenerationResult(
+                    [np.asarray(ImageOps.flip(image).convert('RGBA'), dtype=np.float32) / 255.],
+                    [seed],
+                    steps,
+                    True
+                )
         case _:
             raise Exception(f"Unsupported pipeline {pipeline}.")

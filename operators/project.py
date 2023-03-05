@@ -393,7 +393,7 @@ class ProjectDreamTexture(bpy.types.Operator):
             context.scene.dream_textures_progress = 0
             generated = future.result()
             prompt_subject = context.scene.dream_textures_project_prompt.prompt_structure_token_subject
-            seed = generated[0].seeds[0]
+            seed = generated[0].seeds[0] if isinstance(generated, list) else generated.seeds[0]
             seed_str_length = len(str(seed))
             trim_aware_name = (prompt_subject[:54 - seed_str_length] + '..') if len(prompt_subject) > 54 else prompt_subject
             name_with_trimmed_prompt = f"{trim_aware_name} ({seed})"

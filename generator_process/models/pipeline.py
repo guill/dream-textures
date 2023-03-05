@@ -53,7 +53,7 @@ class Pipeline(enum.IntEnum):
             case Pipeline.STABILITY_SDK:
                 return False
             case Pipeline.AUTOMATIC_WEBUI:
-                return True
+                return False
     
     def negative_prompts(self):
         match self:
@@ -89,4 +89,4 @@ class Pipeline(enum.IntEnum):
             case Pipeline.STABILITY_SDK:
                 return False
             case Pipeline.AUTOMATIC_WEBUI:
-                return False
+                return True

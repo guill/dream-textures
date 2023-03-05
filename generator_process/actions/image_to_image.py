@@ -40,6 +40,9 @@ def image_to_image(
     # Stability SDK
     key: str | None = None,
 
+    # WebUI
+    webui_address: str | None = None,
+
     **kwargs
 ) -> Generator[ImageGenerationResult, None, None]:
     match pipeline:
@@ -234,5 +237,36 @@ def image_to_image(
                             steps,
                             True
                         )
+        case Pipeline.AUTOMATIC_WEBUI:
+            import requests
+            import base64
+            from PIL import Image, ImageOps
+            import io
+            init_image=Image.open(image) if isinstance(image, str) else Image.fromarray(image)
+            buffer = io.BytesIO()
+            init_image.save(buffer, format="PNG")
+            seamless_axes = SeamlessAxes(seamless_axes)
+            r = requests.post("http://" + webui_address + "/sdapi/v1/img2img", json={
+                    "prompt": prompt[0] if isinstance(prompt, list) else prompt,
+                    "negative_prompt": negative_prompt if use_negative_prompt else None,
+                    "init_images": [base64.b64encode(buffer.getvalue()).decode('utf-8')],
+                    "width": width or 512,
+                    "height": height or 512,
+                    "cfg_scale": cfg_scale,
+                    "steps": steps,
+                    "seed": seed,
+                    "denoising_strength": strength,
+                    "tiling": seamless_axes.x or seamless_axes.y,
+                })
+            if r.status_code != 200:
+                raise Exception(f"Error making request to WebUI: {r.json()}")
+            for encoded_image in r.json()["images"]:
+                image = Image.open(io.BytesIO(base64.b64decode(encoded_image)))
+                yield ImageGenerationResult(
+                    [np.asarray(ImageOps.flip(image).convert('RGBA'), dtype=np.float32) / 255.],
+                    [seed],
+                    steps,
+                    True
+                )
         case _:
             raise Exception(f"Unsupported pipeline {pipeline}.")

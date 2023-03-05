@@ -621,11 +621,16 @@ def prompt_to_image(
             import base64
             from PIL import Image, ImageOps
             import io
+            seamless_axes = SeamlessAxes(seamless_axes)
             r = requests.post("http://" + webui_address + "/sdapi/v1/txt2img", json={
                     "prompt": prompt[0] if isinstance(prompt, list) else prompt,
+                    "negative_prompt": negative_prompt if use_negative_prompt else None,
                     "width": width or 512,
                     "height": height or 512,
                     "cfg_scale": cfg_scale,
+                    "steps": steps,
+                    "seed": seed,
+                    "tiling": seamless_axes.x or seamless_axes.y,
                 })
             if r.status_code != 200:
                 raise Exception(f"Error making request to WebUI: {r.json()}")

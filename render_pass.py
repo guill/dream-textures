@@ -115,6 +115,7 @@ def _render_dream_textures_pass(self, layer, size, scene, render_pass, render_re
     generated_args = scene.dream_textures_render_properties_prompt.generate_args()
     generated_args['width'] = size[0]
     generated_args['height'] = size[1]
+    failed = False
     match scene.dream_textures_render_properties_pass_inputs:
         case 'color':
             f = gen.image_to_image(
@@ -144,12 +145,20 @@ def _render_dream_textures_pass(self, layer, size, scene, render_pass, render_re
             self.update_result(render_result) # This does not seem to have an effect.
     def on_done(future):
         nonlocal combined_pixels
-        result = future.result(last_only=True)
-        combined_pixels = result.images[0]
+        nonlocal failed
+        try:
+            result = future.result(last_only=True)
+            combined_pixels = result.images[0]
+        except Exception as e:
+            failed = True
         event.set()
     f.add_response_callback(on_step)
     f.add_done_callback(on_done)
     event.wait()
+
+    if failed:
+        self.update_stats("Dream Textures", "Failed")
+        return
 
     # Perform an inverse transform so when Blender applies its transform everything looks correct.
     self.update_stats("Dream Textures", "Applying inverse color management transforms")

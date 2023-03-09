@@ -401,15 +401,16 @@ def depth_to_image(
 
             depth_image = ImageOps.flip(Image.fromarray(np.uint8(depth * 255)).convert('L'))
 
-            width = depth_image.size[0]
-            height = depth_image.size[1]
-            max_dim = max(width, height)
+            if width is None or height is None:
+                width = depth_image.size[0]
+                height = depth_image.size[1]
+                max_dim = max(width, height)
 
-            # TODO - We probably want this to be configurable since not every machine can handle a 1024x1024 texture
-            max_allowed_dim = 1024
-            if max_dim > max_allowed_dim:
-                width = width / (max_dim / max_allowed_dim)
-                height = height / (max_dim / max_allowed_dim)
+                # TODO - We probably want this to be configurable since not every machine can handle a 1024x1024 texture
+                max_allowed_dim = 1024
+                if max_dim > max_allowed_dim:
+                    width = width / (max_dim / max_allowed_dim)
+                    height = height / (max_dim / max_allowed_dim)
 
             rounded_size = (
                 int(8 * (width // 8)),

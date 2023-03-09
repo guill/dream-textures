@@ -441,6 +441,7 @@ def depth_to_image(
                     "seed": seed,
                     "denoising_strength": strength,
                     "tiling": seamless_axes.x or seamless_axes.y,
+                    "sampler_index": scheduler.webui(),
                     "controlnet_units": [
                         {
                             "input_image": depth_image_b64,

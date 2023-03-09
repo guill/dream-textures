@@ -140,6 +140,31 @@ class Scheduler(enum.Enum):
             case _:
                 raise ValueError(f"{self} cannot be used with DreamStudio.")
 
+    def webui(self):
+        match self:
+            case Scheduler.DDIM:
+                return "DDIM"
+            case Scheduler.DDPM:
+                return "DPM"
+            case Scheduler.EULER_DISCRETE:
+                return "Euler"
+            case Scheduler.EULER_ANCESTRAL_DISCRETE:
+                return "Euler a"
+            case Scheduler.HEUN_DISCRETE:
+                return "Heun"
+            case Scheduler.KDPM2_DISCRETE:
+                return "DPM2 Karras"
+            case Scheduler.KDPM2_ANCESTRAL_DISCRETE:
+                return "DPM2 a Karras"
+            case Scheduler.LMS_DISCRETE:
+                return "LMS"
+            case Scheduler.DPM_SOLVER_MULTISTEP:
+                return "DPM++ 2M Karras"
+            case Scheduler.DPM_SOLVER_SINGLESTEP:
+                return "DPM++ 2S a Karras"
+            case _:
+                raise ValueError(f"{self} cannot be used with WebUI (or the name is different?).")
+
 @dataclass(eq=True)
 class Optimizations:
     attention_slicing: bool = True
@@ -631,6 +656,7 @@ def prompt_to_image(
                     "steps": steps,
                     "seed": seed,
                     "tiling": seamless_axes.x or seamless_axes.y,
+                    "sampler_index": scheduler.webui(),
                 })
             if r.status_code != 200:
                 raise Exception(f"Error making request to WebUI: {r.json()}")

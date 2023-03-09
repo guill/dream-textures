@@ -257,6 +257,7 @@ def image_to_image(
                     "seed": seed,
                     "denoising_strength": strength,
                     "tiling": seamless_axes.x or seamless_axes.y,
+                    "sampler_index": scheduler.webui(),
                 })
             if r.status_code != 200:
                 raise Exception(f"Error making request to WebUI: {r.json()}")

@@ -33,6 +33,7 @@ class AddAdvancedPreset(AddPresetBase, Operator):
     preset_values = [
         "prompt.steps",
         "prompt.cfg_scale",
+        "prompt.depth_weight",
         "prompt.scheduler",
         "prompt.step_preview_mode",
 

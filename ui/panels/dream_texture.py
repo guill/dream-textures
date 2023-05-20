@@ -257,6 +257,7 @@ def advanced_panel(sub_panel, space_type, get_prompt):
             # advanced_box.prop(self, "iterations") # Disabled until supported by the addon.
             layout.prop(get_prompt(context), "steps")
             layout.prop(get_prompt(context), "cfg_scale")
+            layout.prop(get_prompt(context), "depth_weight")
             layout.prop(get_prompt(context), "scheduler")
             layout.prop(get_prompt(context), "step_preview_mode")
 

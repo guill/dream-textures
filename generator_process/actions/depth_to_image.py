@@ -21,6 +21,7 @@ def depth_to_image(
     optimizations: Optimizations,
 
     depth: NDArray | None,
+    depth_weight: float,
     image: NDArray | str | None,
     strength: float,
     prompt: str | list[str],
@@ -445,6 +446,7 @@ def depth_to_image(
                     "controlnet_units": [
                         {
                             "input_image": depth_image_b64,
+                            "weight": depth_weight,
                             # "module": "depth",
                             "model": "control_sd15_depth [fef5e48e]",
                         },

@@ -397,7 +397,7 @@ def depth_to_image(
             from PIL import Image, ImageOps
             import io
 
-            endpoint = "/controlnet/txt2img"
+            endpoint = "/sdapi/v1/txt2img"
             init_image_b64 = None
 
             depth_image = ImageOps.flip(Image.fromarray(np.uint8(depth * 255)).convert('L'))
@@ -424,7 +424,7 @@ def depth_to_image(
             depth_image_b64 = base64.b64encode(depth_buffer.getvalue()).decode('utf-8')
 
             if image is not None:
-                endpoint = "/controlnet/img2img"
+                endpoint = "/sdapi/v1/img2img"
                 init_image=(Image.open(image) if isinstance(image, str) else Image.fromarray(image)).resize(rounded_size)
                 buffer = io.BytesIO()
                 init_image.save(buffer, format="PNG")
@@ -443,14 +443,18 @@ def depth_to_image(
                     "denoising_strength": strength,
                     "tiling": seamless_axes.x or seamless_axes.y,
                     "sampler_index": scheduler.webui(),
-                    "controlnet_units": [
-                        {
-                            "input_image": depth_image_b64,
-                            "weight": depth_weight,
-                            # "module": "depth",
-                            "model": "control_sd15_depth [fef5e48e]",
+                    "alwayson_scripts": {
+                        "controlnet": {
+                            "args": [
+                                {
+                                    "image": depth_image_b64,
+                                    "weight": depth_weight,
+                                    # "module": "depth",
+                                    "model": "control_sd15_depth [fef5e48e]",
+                                },
+                            ],
                         },
-                    ],
+                    },
                 })
             if r.status_code != 200:
                 raise Exception(f"Error making request to WebUI: {r.json()}")
